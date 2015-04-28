@@ -16,7 +16,6 @@ public class TweetContent {
 
     public static final String DELIMITER = "#@";
     public static final String IDELIMITER = ";;";
-    private static final long serialVersionUID = -4560326891663359644L;
 
     private Long id;
     private String tweet;
