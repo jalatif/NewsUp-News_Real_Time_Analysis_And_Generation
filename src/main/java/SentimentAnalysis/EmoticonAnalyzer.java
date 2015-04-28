@@ -1,4 +1,4 @@
-package storm;
+package SentimentAnalysis;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -69,7 +69,7 @@ public class EmoticonAnalyzer {
                 score -= 1;
             System.out.println(match + " " + score);
         }
-        System.out.println("Score = " + score);
+        //System.out.println("Score = " + score);
 
         matcher = EMOJI_REGEX.matcher(s);
         while (matcher.find()) {

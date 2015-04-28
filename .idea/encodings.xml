@@ -3,10 +3,10 @@
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="true">
     <file url="jar://$MAVEN_REPOSITORY$/org/twitter4j/twitter4j-core/4.0.1/twitter4j-core-4.0.1-sources.jar!/twitter4j/conf/ConfigurationBuilder.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/SentimentAnalysis/EmoticonAnalyzer.java" charset="US-ASCII" />
     <file url="file://$PROJECT_DIR$/src/main/java/SentimentAnalysis/GetUserTimeline.java" charset="US-ASCII" />
     <file url="file://$PROJECT_DIR$/src/main/java/scraper/TryScraper.java" charset="US-ASCII" />
     <file url="file://$PROJECT_DIR$/src/main/java/storm/CommentsScraperBolt.java" charset="US-ASCII" />
-    <file url="file://$PROJECT_DIR$/src/main/java/storm/EmoticonAnalyzer.java" charset="US-ASCII" />
     <file url="file://$PROJECT_DIR$/src/main/java/storm/FilterBolt.java" charset="US-ASCII" />
     <file url="file://$PROJECT_DIR$/src/main/java/storm/NewsTopology.java" charset="US-ASCII" />
     <file url="file://$PROJECT_DIR$/src/main/java/storm/SummaryTweetBolt.java" charset="US-ASCII" />

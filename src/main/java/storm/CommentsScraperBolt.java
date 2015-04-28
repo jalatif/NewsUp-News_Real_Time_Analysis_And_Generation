@@ -1,5 +1,6 @@
 package storm;
 
+import SentimentAnalysis.SentimentAnalyzer;
 import Utils.TweetContent;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -24,20 +25,37 @@ import java.util.Map;
  */
 public class CommentsScraperBolt extends BaseRichBolt {
     private OutputCollector outputCollector;
-    private UserAgent userAgent;
+//    private static UserAgent userAgent = null;
+//
+//    private static List<String> getCommentss(String url) {
+//        List<String> comments = null;
+//        if (userAgent == null) {userAgent = new UserAgent();}
+//        try {
+//            userAgent.visit(url);
+//            Document doc = Jsoup.parse(userAgent.doc.innerHTML());
+//            Elements tweets = doc.select("li.js-simple-tweet").select("div.content").select("p");
+//            if (tweets == null) return comments;
+//            comments = new ArrayList<>();
+//            for(Element tweet : tweets) {
+//                comments.add(tweet.text());
+//            }
+//        } catch (Exception e) {
+//            //e.printStackTrace();
+//        }
+//        return comments;
+//    }
 
-    private List<String> getComments(String url) {
+    private static List<String> getComments(String url) {
         List<String> comments = null;
         try {
-            userAgent.visit(url);
-            Document doc = Jsoup.parse(userAgent.doc.innerHTML());
+            Document doc = Jsoup.connect(url).get();
             Elements tweets = doc.select("li.js-simple-tweet").select("div.content").select("p");
             if (tweets == null) return comments;
             comments = new ArrayList<>();
-            for(Element tweet : tweets) {
+            for (Element tweet : tweets) {
                 comments.add(tweet.text());
             }
-        } catch (ResponseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return comments;
@@ -46,9 +64,9 @@ public class CommentsScraperBolt extends BaseRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         outputCollector = collector;
-        userAgent = new UserAgent();
-        System.out.println("SETTINGS:\n" + userAgent.settings);
-        userAgent.settings.autoSaveAsHTML = true;
+        //userAgent = new UserAgent();
+        //System.out.println("SETTINGS:\n" + userAgent.settings);
+        //userAgent.settings.autoSaveAsHTML = true;
     }
 
     @Override
@@ -58,15 +76,25 @@ public class CommentsScraperBolt extends BaseRichBolt {
         String tweet_url = tweetContent.getTweetStatusUrl();
         List<String> comments = getComments(tweet_url);
         if (comments != null) {
-            int i = 0;
+            int i = 1;
             for (String comment : comments) {
-                outputCollector.emit(new Values(tweetContent.getId(), comment, i++));
+                System.out.println("Comment = " + comment + " id = " + tweetContent.getId());
+                outputCollector.emit(new Values(tweetContent.getId(), i++, comment));
             }
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("tweet-id", "comment", "comment-id"));
+        declarer.declare(new Fields("tweet-id", "comment-id", "comment"));
     }
+
+//    public static void main(String[] args) {
+//        List<String> comments = getComments("https://twitter.com/BBCWorld/status/592778023939747840");
+//        if (comments != null) {
+//            for (String comment : comments) {
+//                System.out.println("Comment = " + comment);
+//            }
+//        }
+//    }
 }

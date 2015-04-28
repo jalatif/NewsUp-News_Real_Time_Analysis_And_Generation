@@ -37,11 +37,11 @@ public class FilterBolt extends BaseRichBolt {
         score = Math.min(100, score);
         tweetContent.setScore(score);
         System.out.println("Jalatif " + tweetContent.getUrls().get(0) + " -> " + tweetContent.toString());
-        outputCollector.emit(new Values(tweetContent.toString()));
+        outputCollector.emit(new Values(tweetContent.getId(), tweetContent.toString()));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("tweet-content"));
+        declarer.declare(new Fields("tweet-id", "tweet-content"));
     }
 }

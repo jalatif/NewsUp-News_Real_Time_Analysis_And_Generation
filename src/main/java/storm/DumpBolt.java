@@ -22,8 +22,7 @@ import com.lambdaworks.redis.RedisConnection;
 /**
  * A bolt that prints the word and count to redis
  */
-public class DumpBolt extends BaseRichBolt
-{
+public class DumpBolt extends BaseRichBolt {
     // place holder to keep the connection to redis
     transient RedisConnection<String,String> redis;
     private String[] skipWords = {"http://", "https://", "(", "a", "an", "the", "for", "retweet", "RETWEET", "follow", "FOLLOW"};
@@ -35,8 +34,7 @@ public class DumpBolt extends BaseRichBolt
     public void prepare(
             Map                     map,
             TopologyContext         topologyContext,
-            OutputCollector         outputCollector)
-    {
+            OutputCollector         outputCollector) {
         // instantiate a redis connection
         RedisClient client = new RedisClient("localhost", 6379);
 
@@ -46,8 +44,7 @@ public class DumpBolt extends BaseRichBolt
     }
 
     @Override
-    public void execute(Tuple tuple)
-    {
+    public void execute(Tuple tuple) {
         try {
             String boltId = tuple.getSourceComponent(); // get the source of the tweet
             if (boltId.equals("tweet-spout") && last_seen_final_rankings != null) {
@@ -130,8 +127,7 @@ public class DumpBolt extends BaseRichBolt
 //        }
     }
 
-    public void declareOutputFields(OutputFieldsDeclarer declarer)
-    {
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
         // nothing to add - since it is the final bolt
     }
 }

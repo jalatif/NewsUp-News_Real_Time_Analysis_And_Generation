@@ -19,7 +19,10 @@ import java.util.HashMap;
  */
 public class NewsTopology {
     public final static int TOP_N = 50;
-    private final static String[] news_pages = {"bbcworld", "jalatifabhi", "itzsaikat4u"};
+    private final static int SUMMARY_MIN_CHARS = 20;
+    private final static int MIN_IMAGE_DIMENSIONS_X = 250, MIN_IMAGE_DIMENSIONS_Y = 250;
+    private final static String[] NEWS_PAGES = {"bbcworld", "nytimes", "ibnlive"};//"jalatifabhi", "itzsaikat4u"};
+    private final static String IMAGE_STORE_PATH = "/home/manshu/Pictures/news";
 
     public static void main(String[] args) throws InvalidTopologyException, AuthorizationException, AlreadyAliveException {
         TopologyBuilder topology = new TopologyBuilder();
@@ -31,7 +34,7 @@ public class NewsTopology {
 //        );
 
         TweetSpout tweetSpout = new TweetSpout(
-                Arrays.asList(news_pages),
+                Arrays.asList(NEWS_PAGES),
                 "U5qRMuLtVHY5Fvf5vr2r9pfRH",
                 "MDO4ZapZzzRPj3poFwarUE2wH8WhNlkDzuNfA34LOvtP4b18wT",
                 "144279822-l0Bb4Z2j3uKREd3RUttp4RFv2QcLR2ZN4hbocvlU",
@@ -43,14 +46,37 @@ public class NewsTopology {
 
         topology.setBolt("filter-bolt", new FilterBolt(), 4).shuffleGrouping("tweet-spout");
 
+        topology.setBolt("comment-bolt", new CommentsScraperBolt(), 4).shuffleGrouping("filter-bolt");
+
+        topology.setBolt("sentiment-bolt", new SentimentBolt(), 4).fieldsGrouping("comment-bolt", new Fields("tweet-id")).
+                shuffleGrouping("filter-bolt");
+
+        topology.setBolt("emoticon-bolt", new EmoticonBolt(), 4).fieldsGrouping("comment-bolt", new Fields("tweet-id")).
+                shuffleGrouping("filter-bolt");
+
+        topology.setBolt("summary-bolt", new SummaryTweetBolt(SUMMARY_MIN_CHARS), 6).shuffleGrouping("filter-bolt");
+
+        topology.setBolt("image-collection-bolt", new ImageCollectionBolt(MIN_IMAGE_DIMENSIONS_X, MIN_IMAGE_DIMENSIONS_Y,
+                IMAGE_STORE_PATH), 3).shuffleGrouping("filter-bolt");
+
+        topology.setBolt("final-bolt", new FinalBolt(), 10).
+                fieldsGrouping("filter-bolt", new Fields("tweet-id")).
+                        fieldsGrouping("comment-bolt", new Fields("tweet-id")).
+                            fieldsGrouping("sentiment-bolt", new Fields("tweet-id")).
+                                fieldsGrouping("emoticon-bolt", new Fields("tweet-id")).
+                                    fieldsGrouping("summary-bolt", new Fields("tweet-id")).
+                                        fieldsGrouping("image-collection-bolt", new Fields("tweet-id"));
+
+
+        // Ranking based on count and most popular hashtags
         topology.setBolt("parse-tweet-bolt", new ParseTweetBolt(), 4).shuffleGrouping("filter-bolt");
-//
-//        // #hashtag based
+
+        // #hashtag based
         topology.setBolt("count-bolt", new CountBolt(), 15).fieldsGrouping("parse-tweet-bolt", new Fields("tweet-word"));
-//
+
         topology.setBolt("intermediate-rankings-bolt", new IntermediateRankingsBolt(TOP_N), 4).
                 fieldsGrouping("count-bolt", new Fields("word"));
-//
+
         topology.setBolt("total-rankings-bolt", new TotalRankingsBolt(TOP_N), 1).globalGrouping("intermediate-rankings-bolt");
 
         // attach rolling count bolt using fields grouping - parallelism of 5
@@ -59,15 +85,10 @@ public class NewsTopology {
         topology.setBolt("top-score-bolt", new TopNScoreBolt(TOP_N), 1).shuffleGrouping("filter-bolt");
 
         // attach the report bolt using global grouping - parallelism of 1
-        topology.setBolt("dump-bolt", new DumpBolt(), 1).globalGrouping("top-score-bolt").globalGrouping("total-rankings-bolt").globalGrouping("tweet-spout");
+        topology.setBolt("dump-bolt", new DumpBolt(), 1).globalGrouping("top-score-bolt").
+                globalGrouping("total-rankings-bolt").globalGrouping("tweet-spout");
 
-        //topology.setBolt("tweet-summary-bolt", new SummaryTweetBolt(), 4).shuffleGrouping("tweet-spout");
 
-//        builder.setBolt("parse-tweet-bolt", new ParseTweetBolt(), 10).shuffleGrouping("tweet-spout");
-//        builder.setBolt("infoBolt", new InfoBolt(), 10).fieldsGrouping("parse-tweet-bolt", new Fields("county_id"));
-//        builder.setBolt("top-words", new TopWords(), 10).fieldsGrouping("infoBolt", new Fields("county_id"));
-//        builder.setBolt("report-bolt", new ReportBolt(), 1).globalGrouping("top-words");
-//
         Config conf = new Config();
         conf.setDebug(true);
 

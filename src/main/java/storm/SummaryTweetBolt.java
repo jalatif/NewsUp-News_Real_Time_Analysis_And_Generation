@@ -19,6 +19,11 @@ import java.util.Map;
  */
 public class SummaryTweetBolt extends BaseRichBolt {
     OutputCollector outputCollector;
+    private int min_chars = 10;
+
+    public SummaryTweetBolt(int summary_min_chars) {
+        min_chars = summary_min_chars;
+    }
 
     private String getSummary(String url) throws IOException {
         Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "sumy lex-rank --length=10 --url=" + url});
@@ -28,14 +33,14 @@ public class SummaryTweetBolt extends BaseRichBolt {
         StringBuffer stringBuffer = new StringBuffer();
         boolean error = false;
         String s;
-        System.out.println("Standard output of the command:\n");
+        //System.out.println("Standard output of the command:\n");
         while ((s = stdInput.readLine()) != null) {
-            System.out.println(s);
+            //System.out.println(s);
             stringBuffer.append(s);
         }
 
         // read any errors from the attempted command
-        System.out.println("Standard error of the command (if any):\n");
+        //System.out.println("Standard error of the command (if any):\n");
         while ((s = stdError.readLine()) != null) {
             System.out.println(s);
             error = true;
@@ -59,7 +64,7 @@ public class SummaryTweetBolt extends BaseRichBolt {
         if (!tweetContent.getUrls().isEmpty()) {
             for (String url : tweetContent.getUrls()) {
                 try {
-                    System.out.println("JURL = " + url);
+                    System.out.println("Summary URL = " + url);
                     String s = getSummary(url);
                     if (s == null) continue;
                     stringBuffer.append(s).append("\n");
@@ -67,13 +72,14 @@ public class SummaryTweetBolt extends BaseRichBolt {
                     System.out.println("Url can't be summarized: " + url);
                 }
             }
-            System.out.println("Tweet-url = " + tweetContent.getTweetStatusUrl() + "Summary = " + stringBuffer.toString());
+            if (stringBuffer.length() < min_chars) return;
+            System.out.println("Summary = " + stringBuffer.toString() + "Tweet-url = " + tweetContent.getTweetStatusUrl());
             outputCollector.emit(new Values(tweetContent.getId(), stringBuffer.toString()));
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("tweet-id", "tweet-summary"));
+        declarer.declare(new Fields("tweet-id", "summary"));
     }
 }
