@@ -72,13 +72,13 @@ public class ParseTweetBolt extends BaseRichBolt {
 //            System.out.println(word);
             if (skip_words_set.contains(word)) continue;
             if (!isHashTag(word)) continue;
-            outputCollector.emit(new Values(word));
+            outputCollector.emit(new Values(tweetContent.getId(), word));
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("tweet-word"));
+        declarer.declare(new Fields("tweet-id", "tweet-word"));
     }
 
 }

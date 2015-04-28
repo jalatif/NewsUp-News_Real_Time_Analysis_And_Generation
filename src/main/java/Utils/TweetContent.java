@@ -4,6 +4,7 @@ import twitter4j.Status;
 import twitter4j.URLEntity;
 import twitter4j.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -12,8 +13,10 @@ import java.util.List;
  * Created by manshu on 3/23/15.
  */
 public class TweetContent {
+
     public static final String DELIMITER = "#@";
     public static final String IDELIMITER = ";;";
+    private static final long serialVersionUID = -4560326891663359644L;
 
     private Long id;
     private String tweet;

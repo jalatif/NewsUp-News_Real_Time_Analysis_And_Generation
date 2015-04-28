@@ -23,6 +23,8 @@ public class NewsTopology {
     private final static int MIN_IMAGE_DIMENSIONS_X = 250, MIN_IMAGE_DIMENSIONS_Y = 250;
     private final static String[] NEWS_PAGES = {"bbcworld", "nytimes", "ibnlive"};//"jalatifabhi", "itzsaikat4u"};
     private final static String IMAGE_STORE_PATH = "/home/manshu/Pictures/news";
+    private final static String DB_NAME = "local", COLLECTION_NAME = "TweetStore", HOST_NAME = "localhost";
+    private final static int HOST_PORT = 27017;
 
     public static void main(String[] args) throws InvalidTopologyException, AuthorizationException, AlreadyAliveException {
         TopologyBuilder topology = new TopologyBuilder();
@@ -46,6 +48,8 @@ public class NewsTopology {
 
         topology.setBolt("filter-bolt", new FilterBolt(), 4).shuffleGrouping("tweet-spout");
 
+        topology.setBolt("parse-tweet-bolt", new ParseTweetBolt(), 4).shuffleGrouping("filter-bolt");
+
         topology.setBolt("comment-bolt", new CommentsScraperBolt(), 4).shuffleGrouping("filter-bolt");
 
         topology.setBolt("sentiment-bolt", new SentimentBolt(), 4).fieldsGrouping("comment-bolt", new Fields("tweet-id")).
@@ -59,8 +63,9 @@ public class NewsTopology {
         topology.setBolt("image-collection-bolt", new ImageCollectionBolt(MIN_IMAGE_DIMENSIONS_X, MIN_IMAGE_DIMENSIONS_Y,
                 IMAGE_STORE_PATH), 3).shuffleGrouping("filter-bolt");
 
-        topology.setBolt("final-bolt", new FinalBolt(), 10).
+        topology.setBolt("final-bolt", new FinalBolt(DB_NAME, COLLECTION_NAME, HOST_NAME, HOST_PORT), 10).
                 fieldsGrouping("filter-bolt", new Fields("tweet-id")).
+                    fieldsGrouping("parse-tweet-bolt", new Fields("tweet-id")).
                         fieldsGrouping("comment-bolt", new Fields("tweet-id")).
                             fieldsGrouping("sentiment-bolt", new Fields("tweet-id")).
                                 fieldsGrouping("emoticon-bolt", new Fields("tweet-id")).
@@ -68,25 +73,24 @@ public class NewsTopology {
                                         fieldsGrouping("image-collection-bolt", new Fields("tweet-id"));
 
 
-        // Ranking based on count and most popular hashtags
-        topology.setBolt("parse-tweet-bolt", new ParseTweetBolt(), 4).shuffleGrouping("filter-bolt");
-
-        // #hashtag based
-        topology.setBolt("count-bolt", new CountBolt(), 15).fieldsGrouping("parse-tweet-bolt", new Fields("tweet-word"));
-
-        topology.setBolt("intermediate-rankings-bolt", new IntermediateRankingsBolt(TOP_N), 4).
-                fieldsGrouping("count-bolt", new Fields("word"));
-
-        topology.setBolt("total-rankings-bolt", new TotalRankingsBolt(TOP_N), 1).globalGrouping("intermediate-rankings-bolt");
-
-        // attach rolling count bolt using fields grouping - parallelism of 5
-        // builder.setBolt("rolling-count-bolt", new RollingCountBolt(30, 10), 1).fieldsGrouping("parse-tweet-bolt", new Fields("tweet-word"));
-
-        topology.setBolt("top-score-bolt", new TopNScoreBolt(TOP_N), 1).shuffleGrouping("filter-bolt");
-
-        // attach the report bolt using global grouping - parallelism of 1
-        topology.setBolt("dump-bolt", new DumpBolt(), 1).globalGrouping("top-score-bolt").
-                globalGrouping("total-rankings-bolt").globalGrouping("tweet-spout");
+//        // Ranking based on count and most popular hashtags
+//
+//        // #hashtag based
+//        topology.setBolt("count-bolt", new CountBolt(), 15).fieldsGrouping("parse-tweet-bolt", new Fields("tweet-word"));
+//
+//        topology.setBolt("intermediate-rankings-bolt", new IntermediateRankingsBolt(TOP_N), 4).
+//                fieldsGrouping("count-bolt", new Fields("word"));
+//
+//        topology.setBolt("total-rankings-bolt", new TotalRankingsBolt(TOP_N), 1).globalGrouping("intermediate-rankings-bolt");
+//
+//        // attach rolling count bolt using fields grouping - parallelism of 5
+//        // builder.setBolt("rolling-count-bolt", new RollingCountBolt(30, 10), 1).fieldsGrouping("parse-tweet-bolt", new Fields("tweet-word"));
+//
+//        topology.setBolt("top-score-bolt", new TopNScoreBolt(TOP_N), 1).shuffleGrouping("filter-bolt");
+//
+//        // attach the report bolt using global grouping - parallelism of 1
+//        topology.setBolt("dump-bolt", new DumpBolt(), 1).globalGrouping("top-score-bolt").
+//                globalGrouping("total-rankings-bolt").globalGrouping("tweet-spout");
 
 
         Config conf = new Config();

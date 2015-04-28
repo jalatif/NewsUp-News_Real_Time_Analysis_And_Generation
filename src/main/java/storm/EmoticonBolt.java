@@ -44,7 +44,7 @@ public class EmoticonBolt extends BaseRichBolt {
             TweetContent tweetContent = new TweetContent(tweet_info);
             int emoticon = emoticonAnalyzer.getEmoticonScore(tweetContent.getTweet());
             System.out.println("Emoticon = " + emoticon + " tweet-id=" + tweetContent.getId());
-            outputCollector.emit(new Values(tweetContent.getId(), -1, emoticon));
+            outputCollector.emit(new Values(tweetContent.getId(), 0, emoticon));//0 is for original tweet
         }
     }
 
